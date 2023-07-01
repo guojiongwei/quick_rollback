@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>rollback</title>
+  </head>
+  <body>
+    <script src="https://cdn.bootcdn.net/ajax/libs/petite-vue/0.4.1/petite-vue.umd.min.js"></script>
+    <div id="app" @vue:mounted="onMounted">
+      <select v-model="currentItem">
+        <option value="">请选择回滚版本</option>
+        <option v-for="item in historyList" :key="item.id" :value="item">发版时间：{{ item.time }}</option>
+      </select>
+      <button @click="onRollback">回滚</button>
+    </div>
+  </body>
+  <script>
+    /** vue实例 */
+    PetiteVue.createApp({
+      historyList: [], // 构建记录列表
+      currentItem: undefined, // 当前选中的项目
+      onMounted() {
+        this.getHistory();
+      },
+      /** 获取构建记录列表 */
+      getHistory() {
+        fetch("/history").then(res => res.json()).then(res => {
+          if (res.code === 200) {
+            this.historyList = res.data.list;
+          }
+        });
+      },
+      /** 代码回滚 */
+      onRollback() {
+        if (!this.currentItem) return alert("请选择回滚目标版本!");
+        const isRollback = confirm(`确认项目回滚到${this.currentItem.time}版本!`);
+        if (isRollback) {
+          fetch(`/rollback?id=${this.currentItem.id}`).then(res => res.json()).then(res => {
+            if (res.code === 200) {
+              alert("快速回滚成功!");
+            }
+          });
+        }
+      },
+    }).mount("#app");
+  </script>
+</html>
